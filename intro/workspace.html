@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../style.css">
+        <link rel="stylesheet" href="../prism.css">
+        <script src="../js/prism.js"></script>
+        <title>Setting Up Your Workspace</title>
+    </head>
+    <body>
+        <header class="page-header">
+            <h1>Matt's Graphics Tutorials</h1>
+            <h2>Setting Up Your Workspace</h2>
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#intro">Introduction</a></li>
+                <li><a href="#steps">First Steps</a></li>
+                <li><a href="#webpage">Creating the Webpage</a></li>
+                <li><a href="#scripts">Adding Extra Scripts</a></li>
+            </ul>
+
+            <a href="../index.html">Return to Index</a>
+        </header>
+        <h2 id="intro">Introduction</h2>
+        <p>When following these tutorials, it's best to have your own workspace. This page will show you an example of one, and how to set it up.</p>
+        <h2 id="steps">First Steps</h2>
+        <p>The first thing you'll need to do is create a new folder in the location of your choice. This will be where all of your project files will go.</p>
+        <p>Next, create a new HTML file and add it to the new folder. You don't have to name it anything in particular, </p>
+        <p>After that, create a .js file, and add it to the folder. This is where your code will go.</p>
+        <p>When you're finished with these steps, your project folder should look somewhat like this:</p>
+        <div class="code-container"><pre><code class="language-treeview">project_folder/
+|-- index.html
+|-- main.js</code></pre></div>
+        <h2 id="webpage">Creating the Webpage</h2>
+        <p>Now that you have your .html file, it's time to actually add things to it. Luckily, you won't have to do much.</p>
+        <p>First, add !DOCTYPE and html tags. After that, add a head tag and leave it empty; we'll be adding stuff to it later.</p>
+        <p>Finally, add the body tag, then add a script tag to it, with the src property set to the script you added earlier. This will allow your code to run in the webpage.</p>
+        <p>Once you're finished, the main .html file should look somewhat like this:</p>
+        <div class="code-container"><pre><code class="language-html line-numbers">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head>
+        &lt;!--You may have to put some things here to keep your browser from yelling at you.-->
+    &lt;/head>
+    &lt;body>
+        &lt;script src="main.js">&lt;/script>
+    &lt;/body>
+&lt;/html&gt;</code></pre></div>
+        <h2 id="scripts">Adding Extra Scripts</h2>
+        <p>Some of the tutorials on this site require the use of functions that aren't necessarily available by default in JavaScript. For those, you'll need to either write the functions yourself or find a library with the functions you need.</p>
+        <p>Luckily, the scripts you'll need are already available on this site. Each tutorial includes a link to them when needed, but they can also be downloaded <a href="../Scripts.zip" download>here</a>. Unzip the files into your project folder.</p>
+        <p>Once you're finished with that, your project folder should look somewhat similar to this:</p>
+        <div class="code-container"><pre><code class="language-treeview">project_folder/
+|-- index.html
+|-- main.js
+|-- ImageLoader.js
+|-- ColorConverter.js</code></pre></div>
+        <p>Now that the script files are in the right place, it's time to add them to the main webpage. Luckily, like last time, it's as simple as adding a script tag to the right place. Since both of the scripts you downloaded don't have code that interacts with the body directly, it's safe to put them in the head, like so:</p>
+        <div class="code-container"><pre data-line="4-5"><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head>
+        &lt;script src="ImageLoader.js">&lt;/script>
+        &lt;script src="ColorConverter.js">&lt;/script>
+    &lt;/head>
+    &lt;body>
+        &lt;script src="main.js">&lt;/script>
+    &lt;/body>
+&lt;/html&gt;</code></pre></div>
+        <p>And that should be everything! Adding the new functions to your code is simple &mdash; they can be invoked the same way as any other function.</p>
+        <p>Of course, if you've come here without any idea of how functions work, <a href="https://www.w3schools.com/js/js_functions.asp" target="_blank">W3Schools</a> and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions" target="_blank">MDN</a> have some pretty good explanations. They're probably better than anything I could write about them.</p>
+    </body>
+</html>

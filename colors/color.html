@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../style.css">
+        <link rel="stylesheet" href="../prism.css">
+        <script src="../js/ColorConverter.js"></script>
+        <script src="../js/ImageLoader.js"></script>
+        <script src="../js/prism.js"></script>
+        <title>Color Arithmetic</title>
+    </head>
+    <body>
+        <header class="page-header">
+            <h1>Matt's Graphics Tutorials</h1>
+            <h2>Color Arithmetic</h2>
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#intro">Introduction</a></li>
+                <li><a href="#RGB">RGB Arithmetic</a></li>
+                <li style="list-style:none;">
+                    <ul>
+                        <li><a href="#code">The Code</a></li>
+                        <li><a href="#add">Addition</a></li>
+                        <li><a href="#subtract">Subtraction</a></li>
+                        <li><a href="#difference">Difference</a></li>
+                        <li><a href="#multiply">Multiplication</a></li>
+                        <li><a href="#average">Average</a></li>
+                    </ul>
+                </li>
+                <li><a href="#RGB2">Image RGB Operations</a></li>
+                <li style="list-style:none;">
+                    <ul>
+                        <li><a href="#negative">Negative Image</a></li>
+                        <li><a href="#brightdark">Changing Brightness</a></li>
+                        <li><a href="#greyscale">Greyscale</a></li>
+                        <li><a href="#removeswap">Removing and Swapping Channels</a></li>
+                    </ul>
+                </li>
+                <li><a href="#HSLHSV">HSL and HSV Arithmetic</a></li>
+                <li style="list-style:none;">
+                    <ul>
+                        <li><a href="#hue">Changing the Hue</a></li>
+                        <li><a href="#sat">Changing the Saturation</a></li>
+                        <li><a href="#bright">Changing the Brightness</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <a href="../index.html">Return to Index</a>
+        </header>
+
+        <h2 id="intro">Introduction</h2>
+        <p>Color arithmetic is where you take two colors, do calculations on each of their channels, and get a different color.</p>
+        <p>While it is similar to mixing different colors of paint together, it won't always lead to the same results. For example, while adding red and blue together will create purple, adding yellow and blue together will create gray, not green.</p>
+        <h2 id="RGB">RGB Arithmetic</h2>
+        <h3 class="subheading" id="code">The Code</h3>
+        <p>The following code will perform arithmetic operations on two colors, then draw a rectangle on a canvas using the new, combined color:</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">var canvas = document.createElement("canvas");
+canvas.width = 128;
+canvas.height = 128;
+
+var ctx = canvas.getContext("2d");
+
+var color1 = [255, 63, 63];
+var color2 = [63, 63, 255];
+
+function mixColors(a, b) {
+    //This array automatically truncates values greater than 255 or less than 0.
+    let c = new Uint8ClampedArray(3);
+
+    //Add the color values
+    c[0] = (a[0] + b[0]) / 2;
+    c[1] = (a[1] + b[1]) / 2;
+    c[2] = (a[2] + b[2]) / 2;
+
+    return c;
+}
+
+let newColor = mixColors(color1, color2);
+
+ctx.fillStyle = `rgb(${newColor[0]}, ${newColor[1]}, ${newColor[2]})`;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+document.body.appendChild(canvas)</code></pre></div>
+        <h3 class="subheading" id="add">Addition</h3>
+        <p>Addition is when you add each corresponding color channel of two colors together. If the resulting value is greater than 255, it is truncated. Copy and paste this into the color mixing function to see the sum of the two provided colors.</p>
+        <div class="code-container"><pre><code class="language-javascript">c[0] = a[0] + b[0];
+c[1] = a[1] + b[1];
+c[2] = a[2] + b[2];</code></pre></div>
+        <img src="images/AddSquare.png" class="page-image" alt="Sum of two colors">
+        <p>As you can see, adding red and blue together will create a purplish color.</p>
+        <h3 class="subheading" id="subtract">Subtraction</h3>
+        <p>Subtraction works in a similar way, but with a few key differences, such as the fact that values are now truncated if they're less than 0.</p>
+        <div class="code-container"><pre><code class="language-javascript">c[0] = b[0] - a[0];
+c[1] = b[1] - a[1];
+c[2] = b[2] - a[2];</code></pre></div>
+        <p>In this case, subtracting the first color from the second color results in a darker blue.</p>
+        <img src="images/SubSquare1.png" class="page-image" alt="Difference of two colors">
+        <p>Since subtraction is not commutative, the order you put the values in is important. For example, if you subtract the second color from the first color, you get this:</p>
+        <img src="images/SubSquare2.png" class="page-image" alt="Difference of two colors">
+        <h3 class="subheading" id="difference">Difference</h3>
+        <p>Subtraction works in a similar way, but with a few key differences</p>
+        <div class="code-container"><pre><code class="language-javascript">c[0] = Math.abs(b[0] - a[0]);
+c[1] = Math.abs(b[1] - a[1]);
+c[2] = Math.abs(b[2] - a[2]);</code></pre></div>
+        <img src="images/DifferenceSquare.png" class="page-image" alt="Difference of two colors">
+        <p>Now the colors are combined, instead of ending up darker depending on which one is the minuend and which one is the subtrahend.</p>
+        <h3 class="subheading" id="multiply">Multiplication</h3>
+        <p>Multiplying colors is different from adding or subtracting. If you multiply the colors as they are, the highest possible value is 255*255=65,025. As a result, it will be very difficult to not have white as the product, unless both of the colors you're using are very dark.</p>
+        <p>Luckily, there's a solution. By dividing each color component by 255, multiplying them together, then multiplying the result by 255, you can ensure that the resulting color value will always be between 0 and 255.</p>
+        <div class="code-container"><pre><code class="language-javascript">c[0] = (a[0] / 255) * (b[0] / 255) * 255;
+c[1] = (a[1] / 255) * (b[1] / 255) * 255;
+c[2] = (a[2] / 255) * (b[2] / 255) * 255;</code></pre></div>
+        <p>Since most of the components of the provided color values are somewhat low, the resulting color is probably darker than you're expecting:</p>
+        <img src="images/MultiplySquare.png" class="page-image" alt="Product of two colors">
+        <h3 class="subheading" id="average">Average</h3>
+        <p>An average is obtained by adding two colors together, then dividing the result by 2.</p>
+        <div class="code-container"><pre><code class="language-javascript">c[0] = (a[0] + b[0]) / 2;
+c[1] = (a[1] + b[1]) / 2;
+c[2] = (a[2] + b[2]) / 2;</code></pre></div>
+        <img src="images/AverageSquare.png" class="page-image" alt="Average of two colors">
+        <h2 id="RGB2">Image RGB Operations</h2>
+        <p>When applied to an image, RGB arithmetic can be used to create a number of interesting effects.</p>
+        <p>All of the operations you are about to see will be done on this image of a raven:</p>
+        <img class="page-image" src="images/Raven.jpg" alt="Picture of a raven... I think.">
+        <h3 class="subheading" id="negative">Negative Image</h3>
+        <p>The following code will load an image as ImageData, calculate its negative, and display the result.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">var canvas = document.createElement("canvas");
+var ctx = canvas.getContext("2d");
+
+var imgPromise = loadImage("Raven.jpg");
+
+function filterImage(img) {
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    let newImage = ctx.createImageData(data.width, data.height);
+
+    for (i = 0; i &lt; newImage.data.length; i += 4) {
+        newImage.data[i] = 255 - img.data[i];
+        newImage.data[i + 1] = 255 - img.data[i + 1];
+        newImage.data[i + 2] = 255 - img.data[i + 2];
+        newImage.data[i + 3] = 255;
+    }
+
+    ctx.putImageData(newImage, 0, 0);
+}
+
+imgPromise.then(filterImage);
+document.body.appendChild(canvas);</code></pre></div>
+        <p><code class="language-javascript">img.data[i]</code> represents the Red component of the ImageData, so <code class="language-javascript">255 - img.data[i]</code> is the negative of that. This is done for each color channel, and the result is this:</p>
+        <img class="page-image" src="images/InvertedRaven.png" alt="Inverted picture of a raven">
+        <h3 class="subheading" id="brightdark">Changing the Brightness</h3>
+        <p>To change the brightness, divide the Red, Green, and Blue values by a number larger than 1 to make the image darker, or multiply them by that number to make it brighter.</p>
+        <p>For example, to make the image half as bright, change the lines of code that inverted the image in the previous example to:</p>
+        <div class="code-container"><pre><code class="language-javascript">newImage.data[i] = img.data / 2;
+newImage.data[i + 1] = img.data / 2;
+newImage.data[i + 2] = img.data / 2;
+newImage.data[i + 3] = 255;</code></pre></div>
+        <img src="images/TwiceDarkRaven.png" class="page-image" alt="Darker picture of a raven">
+        <p>To make it twice as bright, use this:</p>
+        <div class="code-container"><pre><code class="language-javascript">newImage.data[i] = img.data * 2;
+newImage.data[i + 1] = img.data * 2;
+newImage.data[i + 2] = img.data * 2;
+newImage.data[i + 3] = 255;</code></pre></div>
+        <img src="images/TwiceBrightRaven.png" class="page-image" alt="Brighter picture of a raven">
+        <p>Instead of dividing or multiplying, you can add or subtract a number to change the brightness. This gives you much more precise control over the results when making an image brighter...</p>
+        <div class="code-container"><pre><code class="language-javascript">newImage.data[i] = img.data + 50;
+newImage.data[i + 1] = img.data + 50;
+newImage.data[i + 2] = img.data + 50;
+newImage.data[i + 3] = 255;</code></pre></div>
+        <img src="images/Plus50Raven.png" class="page-image" alt="Brighter picture of a raven">
+        <p>...or darker:</p>
+        <div class="code-container"><pre><code class="language-javascript">newImage.data[i] = img.data - 50;
+newImage.data[i + 1] = img.data - 50;
+newImage.data[i + 2] = img.data - 50;
+newImage.data[i + 3] = 255;</code></pre></div>
+        <img src="images/Minus50Raven.png" class="page-image" alt="Darker picture of a raven">
+        <h3 class="subheading" id="greyscale">Greyscale</h3>
+        <p>One way to apply a greyscale effect to an image is to calculate a weighted average (here based in ITU Rec. 709) of all three color components and use this average as the value for the shade of gray. The eye is less sensitive to blue, so it gets a smaller coefficient, and more sensitive to green, so it gets a larger coefficient.</p>
+        <div class="code-container"><pre><code class="language-javascript">let c = 0.2126 * img.data[i] + 0.7152 * img.data[i + 1] + 0.0722 * img.data[i + 2];
+
+newImage.data[i] = c;
+newImage.data[i + 1] = c;
+newImage.data[i + 2] = c;
+newImage.data[i + 3] = 255;</code></pre></div>
+        <img class="page-image" src="images/GreyscaleRaven.png" alt="Greyscale picture of a raven">
+        <h3 class="subheading" id="removeswap">Removing and Swapping Channels</h3>
+        <p>By removing channels, you can completely remove a color from an image. For example, this is what happens when you remove red from the raven picture:</p>
+        <div class="code-container"><pre><code class="language-javascript">newImage.data[i] = 0; //Red component set to zero
+newImage.data[i + 1] = img.data[i + 1];
+newImage.data[i + 2] = img.data[i + 2];
+newImage.data[i + 3] = 255;</code></pre></div>
+        <img src="images/RedRemovedRaven.png" class="page-image" alt="Raven picture with red removed">
+        <p>If you remove green instead, you get this:</p>
+        <img src="images/GreenRemovedRaven.png" class="page-image" alt="Raven picture with green removed">
+        <p>And if your remove blue, you get this:</p>
+        <img src="images/BlueRemovedRaven.png" class="page-image" alt="Raven picture with blue removed">
+        <p>Swapping two channels can also give some interesting results, potentially with completely different colors. For example, if you swap the red and green channels, the snow in the image becomes a shade of pink.</p>
+        <div class="code-container"><pre><code class="language-javascript">newImage.data[i] = img.data[i + 1]; //Red component
+newImage.data[i + 1] = img.data[i]; //Green component
+newImage.data[i + 2] = img.data[i + 2]; //Blue component
+newImage.data[i + 3] = 255; //Alpha component</code></pre></div>
+        <img src="images/RGSwapRaven.png" class="page-image" alt="Raven picture with red and green swapped">
+        <p>If red and blue are swapped instead, you get a more orange-ish color.</p>
+        <img src="images/RBSwapRaven.png" class="page-image" alt="Raven picture with red and blue swapped">
+        <p>Swapping green and blue will cause the image to appear green.</p>
+        <img src="images/GBSwapRaven.png" class="page-image" alt="Raven picture with green and blue swapped">
+        <p>If you want a more vibrant shade of pink for some reason, you can achieve that by setting the blue channel to the same value as the red channel.</p>
+        <div class="code-container"><pre><code class="language-javascript">newImage.data[i] = img.data[i]; //Red component
+newImage.data[i + 1] = img.data[i + 1]; //Green component
+newImage.data[i + 2] = img.data[i]; //Blue component
+newImage.data[i + 3] = 255; //Alpha component</code></pre></div>
+        <img src="images/RBShareRaven.png" class="page-image" alt="Raven picture with red and blue set to identical values">
+        <h2 id="HSLHSV">HSL and HSV Arithmetic</h2>
+        <p>Thanks to the color conversion functions provided in <a href="../js/ColorConverter.js" target="_blank">this script</a>, we can do HSL and HSV arithmetic on images.</p>
+        <p>This time, the examples will be done on this picture of a group of frogs:</p>
+        <img class="page-image" src="images/Froggies.jpg" alt="Picture of frogs">
+        <h3 class="subheading" id="hue">Changing Hue</h3>
+        <p>Changing Hue under both the HSL and HSV models have pretty much the same results, so for no particular reason, this example will be done with the HSL model.</p>
+        <p>The following code will load an image, convert the color of each pixel to HSL, change the Hue by adding a certain value to it, then convert it back to RGB to display it.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">var canvas = document.createElement("canvas");
+var ctx = canvas.getContext("2d");
+
+var imagePromise = loadImage("Froggies.jpg");
+
+function drawImage(data) {
+    canvas.width = data.width;
+    canvas.height = data.height;
+
+    let newImage = ctx.createImageData(data.width, data.height);
+
+    for (i = 0; i < data.data.length; i += 4) {
+        let colorHSL = rgbToHsl(data.data[i], data.data[i + 1], data.data[i + 2]);
+
+        colorHSL[0] += (1 / 6);
+
+        let color = hslToRgb(colorHSL[0], colorHSL[1], colorHSL[2]);
+
+        newImage.data[i] = color[0];
+        newImage.data[i + 1] = color[1];
+        newImage.data[i + 2] = color[2];
+        newImage.data[i + 3] = 255;
+    }
+
+    ctx.putImageData(newImage, 0, 0);
+}
+
+imagePromise.then(drawImage);
+
+document.body.appendChild(canvas);</code></pre></div>
+        <p>1/6 is used here to represent a hue shift of 60&deg;, since the conversion function we use represents HSL color as three numbers between 0 and 1. Here are pictures of the results of shifting the hue by 0&deg;, 60&deg;, 120&deg;, 180&deg;, 240&deg;, and 300&deg;. 360&deg; gives the same results as 0&deg;, so it's not included here.</p>
+        <figure>
+            <img class="page-image" src="images/Froggies.jpg" alt="Picture of frogs">
+            <img class="page-image" src="images/Shift60Froggies.png" alt="Hue shifted 60 degrees">
+            <img class="page-image" src="images/Shift120Froggies.png" alt="Hue shifted 120 degrees">
+            <img class="page-image" src="images/Shift180Froggies.png" alt="Hue shifted 180 degrees">
+            <img class="page-image" src="images/Shift240Froggies.png" alt="Hue shifted 240 degrees">
+            <img class="page-image" src="images/Shift300Froggies.png" alt="Hue shifted 300 degrees">
+        </figure>
+        <p>You can also set the entire image to a certain hue to give the entire image the same color. For example, here Hue is set to 0, which is a shade of red.</p>
+        <img class="page-image" src="images/ConstantHueFroggies.png">
+        <h3 class="subheading" id="sat">Changing Saturation</h3>
+        <p>You can also change the saturation to make the image more colorful, or more like pastel, or monochrome. This time, the results are slightly different depending on if you use HSL or HSV.</p>
+        <p>For example, to increase the saturation by multiplying it by 2.5, change the lines of code that changed the hue to this:</p>
+        <div class="code-container"><pre><code class="language-javascript">let colorHSL = rgbToHsl(data.data[i], data.data[i + 1], data.data[i + 2]);
+colorHSL[1] *= 2.5;
+            
+let color = hslToRgb(colorHSL[0], colorHSL[1], colorHSL[2]);</code></pre></div>
+        <p>As a result, the colors of the image become much brighter if they weren't bright already. The left image uses HSL, while the right image uses HSV.</p>
+        <img src="images/HSLFroggiesSat25.png" class="page-image">
+        <img src="images/HSVFroggiesSat25.png" class="page-image">
+        <p>If you multiply it by 0.5 instead, you decrease the saturation by halving it.</p>
+        <img src="images/HSLFroggiesSat05.png" class="page-image">
+        <img src="images/HSVFroggiesSat05.png" class="page-image">
+        <p>If saturation is set to 0, the image will be greyscale. The results are different for HSL and HSV color, but neither one is the same as the weighted-average formula discussed earlier.</p>
+        <img src="images/GreyscaleFroggiesHSL.jpg" class="page-image">
+        <img src="images/GreyscaleFroggiesHSV.png" class="page-image">
+        <p>And this is what you get if the saturation of every pixel is set to 50%. Every part of the image now looks equally colorful, for better or worse.</p>
+        <img src="images/HSLHalfSatFroggies.png" class="page-image">
+        <img src="images/HSVHalfSatFroggies.png" class="page-image">
+        <h3 class="subheading" id="bright">Changing Brightness</h3>
+        <p>Finally, you can also change the brightness of an image using HSL or HSV color. Once again, they will have slightly different results.</p>
+        <div class="code-container"><pre><code class="language-javascript">let colorHSL = rgbToHsl(data.data[i], data.data[i + 1], data.data[i + 2]);
+colorHSL[2] /= 2;
+
+let color = hslToRgb(colorHSL[0], colorHSL[1], colorHSL[2]);</code></pre></div>
+        <img src="images/HSLTwiceDarkFroggies.png" class="page-image">
+        <img src="images/HSVTwiceDarkFroggies.png" class="page-image">
+        <p>You can also decreased the brightness by subtracting a value from it instead:</p>
+        <div class="code-container"><pre><code class="language-javascript">let colorHSL = rgbToHsl(data.data[i], data.data[i + 1], data.data[i + 2]);
+colorHSL[2] -= (50 / 255);
+            
+let color = hslToRgb(colorHSL[0], colorHSL[1], colorHSL[2]);</code></pre></div>
+        <img src="images/HSLSubtractFroggies.png" class="page-image">
+        <img src="images/HSVSubtractFroggies.png" class="page-image">
+        <p>And setting the brightness of all pixels to 50% give you this:</p>
+        <img src="images/HSLFixedBrightFroggies.png" class="page-image">
+        <img src="images/HSVFixedBrightFroggies.png" class="page-image">
+        <p>Most of what you saw here can be done with much less effort via the canvas context's <a href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/filter" target="_blank">filter</a> property, but where's the fun in that?</p>
+    </body>
+</html>

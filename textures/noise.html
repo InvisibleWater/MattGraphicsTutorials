@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+	    <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <link rel="stylesheet" href="../style.css">
+	    <link rel="stylesheet" href="../prism.css">
+	    <script src="../js/prism.js"></script>
+	    <title>Generating Textures Using Random Noise</title>
+        <script src="../js/ColorConverter.js"></script>
+        <script src="../js/EffectPlayer.js"></script>
+        <script src="js/NoiseAnimation.js"></script>
+	    <script src="../js/prism.js"></script>
+    </head>
+    <body>
+        <header class="page-header">
+            <h1>Matt's Graphics Tutorials</h1>
+            <h2>Generating Textures Using Random Noise</h2>
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#smoothNoise">Smooth Noise</a></li>
+                <li><a href="#turbulence">Turbulence</a></li>
+                <li><a href="#clouds">Clouds</a></li>
+                <li><a href="#marble">Marble</a></li>
+                <li><a href="#sand">Sand</a></li>
+                <li><a href="#wood">Wood</a></li>
+                <li><a href="#threeDNoise">3D Random Noise</a></li>
+            </ul>
+
+            <a href="../index.html">Return to Index</a>
+        </header>
+        <h2 id="introduction">Introduction</h2>
+        <p>In nature, everything has a look that's at least somewhat randomized. This is difficult to achieve through mathematical formulas alone, but with randomly-generated noise, it becomes much easier.</p>
+
+        <h2 id="smoothNoise">Smooth Noise</h2>
+        <p>To make random noise, we need a table of random values. Since our interest is making textures, a 2D array is used. The function generateNoise will be used to fill the array with random numbers, and the draw function handles drawing it on the canvas. The noise itself is generated using <code class="language-javascript">Math.random()</code>, which returns a random number between 0 and 1.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">var noiseWidth = 128;
+var noiseHeight = 128;
+
+var canvas = document.createElement("canvas");
+canvas.width = noiseWidth;
+canvas.height = noiseHeight;
+
+var ctx = canvas.getContext("2d");
+
+var noise = [];
+
+function generateNoise() {
+    for (let y = 0; y < noiseHeight; y++) {
+        noise[y] = [];
+        for (let x = 0; x < noiseWidth; x++) {
+            noise[y][x] = Math.random();
+        }
+    }
+}
+
+function draw() {
+    generateNoise();
+
+    let imageData = ctx.createImageData(noiseWidth, noiseHeight);
+
+    for (let y = 0; y < noiseHeight; y++) {
+        for (let x = 0; x < noiseWidth; x++) {
+            let id = (y * canvas.width + x) * 4;
+            let c = noise[y][x] * 256;
+
+            imageData.data[id] = c;
+            imageData.data[id + 1] = c;
+            imageData.data[id + 2] = c;
+            imageData.data[id + 3] = 255;
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+}
+
+draw();
+
+document.body.appendChild(canvas);</code></pre></div>
+        <p>Here's the noise it generates:</p>
+        <img class="page-image" src="images/basicNoise.png" width=192 height=192 alt="Basic noise pattern">
+        <p>This noise doesn't look particularly natural, however, especially if you zoom in. Zoom in by dividing the x and y used to call the noise array by 8, in the pixel loop of the draw function. You get something blocky:</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">let id = (y * canvas.width + x) * 4;
+let c = noise[Math.floor(y / 8)][Math.floor(x / 8)]; //Make sure they're integers
+            
+imageData.data[id] = c;
+imageData.data[id + 1] = c;
+imageData.data[id + 2] = c;
+imageData.data[id + 3] = 255;</code></pre></div>
+        <p>When zooming in, we want something smoother. For that, bilinear interpolation can be used. Currently, the noise is an array with integer indices pointing to its contents. By using bilinear interpolation on the fractional part, you can make it smoother. To do that, a new function, smoothNoise, is introduced: </p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function smoothNoise(x, y) {
+    //Get fractional part of x and y
+    let fractX = x - Math.floor(x);
+    let fractY = y - Math.floor(y);
+    
+    //Wrap around
+    let x1 = (Math.floor(x) + noiseWidth) % noiseWidth;
+    let y1 = (Math.floor(y) + noiseHeight) % noiseHeight;
+
+    //Neighbouring values
+    let x2 = (x1 + noiseWidth - 1) % noiseWidth;
+    let y2 = (y1 + noiseHeight - 1) % noiseHeight;
+
+    //Bilinear interpolation
+    let value = 0.0;
+    value += fractX * fractY * noise[y1][x1];
+    value += (1 - fractX) * fractY * noise[y1][x2];
+    value += fractX * (1 - fractY) * noise[y2][x1];
+    value += (1 - fractX) * (1 - fractY) * noise[y2][x2];
+
+    return value;
+}</code></pre></div>
+        <p>The returned value is the weighted average of four neighbouring pixels in the array. In the drawing function, you can use this instead of directly calling the noise array.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">let id = (y * canvas.width + x) * 4;
+let c = smoothNoise(x / 8, y / 8)
+                        
+imageData.data[id] = c;
+imageData.data[id + 1] = c;
+imageData.data[id + 2] = c;
+imageData.data[id + 3] = 255;</code></pre></div>
+        <p>This is the result zoomed in 8 times with bilinear interpolation. If you don't zoom in, you probably won't see the interpolation:</p>
+        <img class="page-image" src="images/smoothNoise.png" width=192 height=192 alt="Zoomed-in smooth noise pattern">
+        <p>This will be very useful for random noise. The smoothing method could probably be better, but it'll work for now.</p>
+        <h2 id="turbulence">Turbulence</h2>
+        <p>Turbulence is what creates natural-looking features from smoothed noise. With the right application of it, you can give otherwise flat-looking patterns natural-looking textures.</p>
+        <p>In 2D, this is done by adding multiple sizes of smooth noise together:</p>
+        <img class="page-image" src="images/noiseZoomPlot.png" alt="Different sizes of smooth noise in sequence. The initial zoom is 16, and is divided by 2 until it reaches 1.">
+        <p>The zoom factor started at 16 here, and is divided through 2 each time, until the zoom factor is 1.</p>
+        <p>When you add these 5 images together, then divide them by 5 to get the average, you get a turbulence texture:</p>
+        <img class="page-image" src="images/turbulenceExample.png" alt="An example of a turbulence pattern.">
+        <p>Here's a function that will do all of that automatically. The "size" parameter is the initial zoom factor, which was 16 in the example above. The returned value is normalized so it will be a value between 0 and 255.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function turbulence(x, y, size) {
+    let value = 0.0;
+    let initialSize = size;
+    
+    while (size >= 2) {
+        value += smoothNoise(x / size, y / size) * size;
+        size /= 2.0;
+    }
+
+    return (128.0 * value / initialSize);
+}</code></pre></div>
+        <p>The size is set to 64 here, and the result looks like this:</p>
+        <img class="page-image" src="images/turbulence64.png" alt="Turbulence pattern with an initial size of 64.">
+        <p>If you set the initial size to something bigger, like 256, the result becomes much bigger and smoother:</p>
+        <img class="page-image" src="images/turbulence256.png" alt="Turbulence pattern with an initial size of 256.">
+        <p>And here's a very small initial size of only 8:</p>
+        <img class="page-image" src="images/turbulence8.png" alt="Turbulence pattern with an initial size of 8.">
+        <p>The textures seen here may have some obvious lines because of the bilinear filter smooth function. The Clouds filters seen in programs like Photoshop will generate a similar pattern, but with much nicer smoothing. Nicer smoothing filters are beyond the scope of this tutorial, though.</p>
+        <p>Of course, if you use no smoothing function at all, it looks like this:</p>
+        <img class="page-image" src="images/roughTurbulence.png" alt="Turbulence pattern with no bilinear interpolation.">
+        <h2 id="clouds">Clouds</h2>
+        <p>To make clouds, you can use the turbulence texture from earlier, but with a blue-and-white color palette instead of black and white. For that, an HSL-to-RGB conversion function can be used, with the hue set to a shade of blue (240&deg;) and lightness ranging from 75 to 100 percent to make it bright enough. Here's a new drawing function that will achieve this:</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function draw() {
+    generateNoise();
+    
+    let imageData = ctx.createImageData(canvas.width, canvas.height);
+
+    for (y = 0; y < noiseHeight; y++) {
+        for (x = 0; x < noiseWidth; x++) {
+            let id = (y * canvas.width + x) * 4;
+            let l = 192 + turbulence(x, y, 64) / 4;
+            let c = hslToRgb(240 / 360, 1, l / 256);
+
+            imageData.data[id] = c[0];
+            imageData.data[id + 1] = c[1];
+            imageData.data[id + 2] = c[2];
+            imageData.data[id + 3] = 255;
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+}</code></pre></div>
+        <p>The conversion function used in this example was taken from <a href="../js/ColorConverter.js" target="_blank">this script</a>. Feel free to use it if you want to.</p>
+        <img class="page-image" src="images/clouds.png" alt="Procedurally generated clouds">
+        <h2 id="marble">Marble</h2>
+        <p>It's possible to use random noise to create a texture that looks like marble. To do this, a sine pattern is taken as a base. A sine pattern looks like this:</p>
+        <img class="page-image" src="../effects/images/SinePlot3.png" width=192 height=192 alt="A basic sine pattern">
+        <p>The sine pattern is generated by giving the pixel at position (x, y) the color value <code class="language-javascript">Math.sin(x + y) * 256</code>. You can change the angle and period, or amount of lines, by multiplying x and y by certain factors. The sine pattern has dark and bright line, and by applying turbulence to these lines by adding a turbulence term in the sine, you get something that looks like the veins of marble:</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function draw() {
+    generateNoise();
+    
+    let imageData = ctx.createImageData(canvas.width, canvas.height);
+
+    //xPeriod and yPeriod together define the angles of the lines
+    //If xPeriod and yPeriod are both 0, it becomes a normal clouds or turbulence pattern
+    let xPeriod = 5.0; //Defines repetition of lines in x direction
+    let yPeriod = 10.0; //Defines repetition of lines in y direction
+    //If turbPower is 0, it becomes a normal sine pattern
+    let turbPower = 5.0; //Makes twists
+    let turbSize = 32.0; //Initial size of turbulence
+
+    for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+            let id = (y * canvas.width + x) * 4;
+            let xyValue = x * xPeriod / noiseWidth + y * yPeriod / noiseHeight + turbPower * turbulence(x, y, turbSize) / 256.0;
+            let sineValue = 256 * Math.abs(Math.sin(xyValue * Math.PI));
+
+            imageData.data[id] = sineValue;
+            imageData.data[id + 1] = sineValue;
+            imageData.data[id + 2] = sineValue;
+            imageData.data[id + 3] = 255;
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+}</code></pre></div>
+        <p>The value "xyValue" is the sum of x multiplied by a factor, y multiplied by a factor, and the turbulence multiplied by a factor. xPeriod, yPeriod, and turbPower are parameters you can change to get different textures. The division through 256 is done to bring it to a value between 0 and 1, since the turbulence function was designed to return values between 0 and 255. The values above give the following result:</p>
+        <img class="page-image" src="images/marbleExample.png" width=192 height=192 alt="Procedurally generated marble tile">
+        <p>Decreasing turbPower will give it less twists. For example, if you set it to 1, you get:</p>
+        <img class="page-image" src="images/weakMarbleExample.png" width=192 height=192 alt="Marble generated using a lower turbulence power">
+        <p>You can see the sine pattern much better now. The dark and bright lines only twist a small bit, which still gives a sort of natural look.</p>
+        <p>Changing the initial size of the turbulence function makes the twists bigger and much more subtle (similar to making turbPower smaller), while a smaller initial size gives much smaller but more aggressive twists. In the following images, turbPower was set to 5 again, and turbSize was set to 128 and 16, respectively:</p>
+        <img class="page-image" src="images/marbleTurbSize128.png" width=192 height=192 alt="Marble generated using an initial zoom factor of 128.">
+        <img class="page-image" src="images/marbleTurbSize16.png" width=192 height=192 alt="Marble generated using an initial zoom factor of 16.">
+        <p>Changing the x or y periods changes the amount of black lines in the image. For example, in this one the lines are made wider and with an angle of 0&deg; by setting xPeriod to 0 and yPeriod to 1 so that there will be only one horizontal black line. turbSize is set to 32, and turbPower to only 1 so you can see the line better:</p>
+        <img class="page-image" src="images/marbleOneLine.png" width=192 height=192 alt="Marble tile with only one line running through it">
+        <p>Here are the same parameters, but with turbPower set to 5. There's still only one line, but the bigger turbulence helps to obscure that.</p>
+        <img class="page-image" src="images/marbleOneLine5.png" width=192 height=192 alt="Marble tile with turbulence power of 5. The setting obscures the fact that there is one one line.">
+        <p>You can also change the color of the marble by using different values for red, green, and blue. For example, this will give it a greenish tint.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">let xyValue = x * xPeriod / noiseWidth + y * yPeriod / noiseHeight + turbPower * turbulence(x, y, turbSize) / 256.0;
+let sineValue = 184 * Math.abs(Math.sin(xyValue * Math.PI))
+let id = (y * imageData.width + x) * 4;
+            
+imageData.data[id] = 21 + sineValue;
+imageData.data[id+1] = 71 + sineValue;
+imageData.data[id+2] = 52 + sineValue;
+imageData.data[id+3] = 255;</code></pre></div>
+        <img class="page-image" src="images/coloredMarble.png" width=192 height=192 alt="Procedurally generated marble pattern with color">
+        <h2 id="sand">Sand</h2>
+        <p>It's possible to apply the code used to generate Marble patterns for other things. For example, with the right color, you can create sand-like patterns.</p>
+        <p>This uses the same HSL-to-RGB function as the Clouds example from earlier.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function draw() {
+    generateNoise();
+
+    let imageData = ctx.createImageData(canvas.width, canvas.height);
+
+    //xPeriod and yPeriod together define the angles of the lines
+    //If xPeriod and yPeriod are both 0, it becomes a normal clouds or turbulence pattern
+    let xPeriod = 5.0; //Defines repetition of lines in x direction
+    let yPeriod = 10.0; //Defines repetition of lines in y direction
+    //If turbPower is 0, it becomes a normal sine pattern
+    let turbPower = 5.0; //Makes twists
+    let turbSize = 128.0; //Initial size of turbulence
+
+    for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+            let id = (y * canvas.width + x) * 4;
+            let xyValue = x * xPeriod / noiseWidth + y * yPeriod / noiseHeight + turbPower * turbulence(x, y, turbSize) / 256.0;
+            let sineValue = Math.abs(Math.sin(xyValue * Math.PI));
+            let c = hslToRgb(21 / 360, 41 / 100, (95 + sineValue) / 100);
+
+            imageData.data[id] = c[0];
+            imageData.data[id + 1] = c[1];
+            imageData.data[id + 2] = c[2];
+            imageData.data[id + 3] = 255;
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+}</code></pre></div>
+        <img class="page-image" src="images/sandPattern.png" width=192 height=192 alt="Procedurally generated sand pattern">
+        <p>It's kind of difficult to see the individual bends and twists, but I assure you, they are there.</p>
+        <h2 id="wood">Wood</h2>
+        <p>A texture resembling wood, or the rings of a tree stump, can be created by adding turbulence to the following mathematical function:</p>
+        <img class="page-image" src="../effects/images/SinePlot4.png" width=192 height=192 alt="A series of rings creating using a sine function">
+        <p>To get the pattern shown above, take the sine of the distance of x and y to the center, so the color of the pixel at the position (x, y) is <code style="white-space:nowrap" class="language-javascript">256 * Math.sin(Math.sqrt(x * x + y * y))</code>. Add a turbulence term into the sine, and you get natural-looking wood.</p>
+        <p>The values for red, green, and blue are calculated in a way that ensures that the wood will look brown.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function draw() {
+    generateNoise();
+    
+    let imageData = ctx.createImageData(canvas.width, canvas.height);
+
+    let xyPeriod = 12; //Number of rings
+    let turbPower = 0.1; //Creates twists
+    let turbSize = 32; //Initial zoom factor of turbulence
+
+    for (y = 0; y < canvas.height; y++) {
+        for (x = 0; x < canvas.width; x++) {
+            let id = (y * canvas.width + x) * 4;
+            let xValue = (x - noiseWidth / 2) / noiseWidth;
+            let yValue = (y - noiseHeight / 2) / noiseHeight;
+            let distValue = Math.sqrt(xValue * xValue + yValue * yValue) + turbPower * turbulence(x, y, turbSize) / 256;
+            let sineValue = 128 * Math.abs(Math.sin(2 * xyPeriod * distValue * Math.PI));
+
+            imageData.data[id] = 80 + sineValue;
+            imageData.data[id + 1] = 30 + sineValue;
+            imageData.data[id + 2] = 30;
+            imageData.data[id + 3] = 255;
+        }
+    }
+}</code></pre></div>
+        <p>The rings are supposed to be visible here, so unlike the marble textures, turbPower should be a smaller number.</p>
+        <img class="page-image" width=192 height=192 src="images/woodPattern1.png" alt="A wood pattern with 12 rings">
+        <p>Here's the same result with more rings (xyPeriod is set to 25):</p>
+        <img class="page-image" width=192 height=192 src="images/woodPattern2.png"  alt="A wood pattern with 25 rings">
+        <p>In this image, the wood has 12 rings again, but there's more turbulence (turbPower is set to 0.2):</p>
+        <img class="page-image" width=192 height=192 src="images/woodPattern3.png"  alt="A wood pattern created with a higher turbulence power">
+        <p>If you set turbPower too high, the rings will no longer be visible, and you'll get something similar to the marble textures from earlier. For example, here's what happens when you set it to 0.5:</p>
+        <img class="page-image" width=192 height=192 src="images/woodPattern4.png"  alt="A wood pattern created with an incredibly high turbulence power">
+        <p>2D random noise has many other uses beyond generating textures, such as terrain heightmaps, but they are beyond the scope of this tutorial.</p>
+        <h2 id="threeDNoise">3D Random Noise</h2>
+        <p>Random noise can be extended to any number of dimensions. Extending to three dimensions requires the addition of a z-component &mdash; besides a width and a height, the noise array now needs a depth.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">var noiseWidth = 192;
+var noiseHeight = 192;
+var noiseDepth = 64;
+
+var canvas = document.createElement("canvas");
+canvas.width = noiseWidth;
+canvas.height = noiseHeight;
+
+var ctx = canvas.getContext("2d");
+
+var noise = [];</code></pre></div>
+        <p>The noise generator function now has three dimensions to fill up, so it gets an extra loop:</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function generateNoise() {
+    for (z = 0; z < noiseDepth; z++) {
+        noise[z] = [];
+        for (y = 0; y < noiseHeight; y++) {
+            noise[z][y] = [];
+            for (x = 0; x < noiseWidth; x++) {
+                noise[z][y][x] = Math.random();
+            }
+        }
+    }
+}</code></pre></div>
+        <p>The smoothing function now has to interpolate in the x, y, and z directions, so there are 8 terms instead of 4.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function smoothNoise(x, y, z) {
+    //Get fractional part of x, y, and z
+    let fractX = x - Math.floor(x);
+    let fractY = y - Math.floor(y);
+    let fractZ = z - Math.floor(z);
+    
+    //Wrap around
+    let x1 = (Math.floor(x) + noiseWidth) % noiseWidth;
+    let y1 = (Math.floor(y) + noiseHeight) % noiseHeight;
+    let z1 = (Math.floor(z) + noiseDepth) % noiseDepth;
+
+    //Neighbour values
+    let x2 = (x1 + noiseWidth - 1) % noiseWidth;
+    let y2 = (y1 + noiseHeight - 1) % noiseHeight;
+    let z2 = (z1 + noiseDepth - 1) % noiseDepth;
+    
+    //Smooth the noise with bilinear interpolation
+    let value = 0.0;
+    value += fractX * fractY * fractZ * noise[z1][y1][x1];
+    value += fractX * (1 - fractY) * fractZ * noise[z1][y2][x1];
+    value += (1 - fractX) * fractY * fractZ * noise[z1][y1][x2];
+    value += (1 - fractX) * (1 - fractY) * fractZ * noise[z1][y2][x2];
+
+    value += fractX * fractY * (1 - fractZ) * noise[z2][y1][x1];
+    value += fractX * (1 - fractY) * (1 - fractZ) * noise[z2][y2][x1];
+    value += (1 - fractX) * fractY * (1 - fractZ) * noise[z2][y1][x2];
+    value += (1 - fractX) * (1 - fractY) * (1 - fractZ) * noise[z2][y2][x2];
+    return value;
+}</code></pre></div>
+        <p>Luckily, the turbulence function is much easier to extend; all you have to do is add a z parameter in a few places.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">function turbulence(x, y, z, size) {
+    let value = 0.0;
+    let initialSize = size;
+    
+    while (size >= 2.0) {
+        value += smoothNoise(x / size, y / size, z / size) * size;
+        size /= 2.0;
+    }
+
+    return (128.0 * value / initialSize);
+}</code></pre></div>
+        <p>The draw function and surrounding code is dedicated to generating animated clouds. It's as if they're forming and changing in real time.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">var imageData = ctx.createImageData(canvas.width, canvas.height) //We don't want to create a new ImageData every frame. That's just wasteful.
+
+function draw(time) {
+    let animTime = time / 40.0;
+
+    for (y = 0; y < canvas.height; y++) {
+        for (x = 0; x < canvas.width; x++) {
+            let id = (y * canvas.width + x) * 4;
+            let l = 192 + Math.floor(turbulence(x, y, animTime, 32) % 256) / 4;
+            let c = hslToRgb(169 / 256, 1, l / 256)
+
+            imageData.data[id] = c[0];
+            imageData.data[id + 1] = c[1];
+            imageData.data[id + 2] = c[2];
+            imageData.data[id + 3] = 255;
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    window.requestAnimationFrame(draw);
+}
+
+generateNoise();
+window.requestAnimationFrame(draw);
+
+document.body.appendChild(canvas);</code></pre></div>
+        <p>When you're finished, it should look somewhat similar to this:</p>
+        <div id="container"></div>
+        <p>3D noise-based textures have a number of uses, including, but certainly not limited to animated textures, volumetric fog, and 3D textures for things like planets or mountains.</p>
+        <script src="js/noise.js"></script>
+    </body>
+</html>
