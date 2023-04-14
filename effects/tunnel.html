@@ -11,7 +11,6 @@
         <script src="js/StaticTunnel.js"></script>
         <script src="js/MovingTunnel.js"></script>
         <script src="../js/prism.js"></script>
-        <script src="js/clientTextureFix.js"></script>
     </head>
     <body>
         <header class="page-header">
@@ -229,8 +228,8 @@ document.body.appendChild(canvas);</code></pre></div>
             var player3 = new EffectPlayer(MovingTunnel, 400, 300);
 
             let texturePromise1 = generateImage(256, 256, (x, y) => [(x ^ y), (x ^ y), (x ^ y), 255]);
-            let texturePromise2 = loadImage("images/TunnelBackground.jpg").catch(getImageData);
-            let texturePromise3 = loadImage("images/TunnelBackground.jpg").catch(getImageData);
+            let texturePromise2 = loadImage("images/TunnelBackground.jpg");
+            let texturePromise3 = loadImage("images/TunnelBackground.jpg");
 
             player1.load(texturePromise1);
             player1.render(document.getElementById("container1"));
