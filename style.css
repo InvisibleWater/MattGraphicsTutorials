@@ -112,3 +112,7 @@ a:active {
 	color: white;
 	text-decoration: none;
 }
+
+noscript {
+	display: block;
+}
