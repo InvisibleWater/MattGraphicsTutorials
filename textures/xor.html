@@ -51,7 +51,7 @@ for (let y = 0; y < h; y++) {
 		imageData.data[id] = c;
 		imageData.data[id+1] = c;
 		imageData.data[id+2] = c;
-		imageData.data[id+3] = c;
+		imageData.data[id+3] = 255;
 	}
 }
 			
@@ -126,7 +126,7 @@ for (let y = 0; y < h; y++) {
         imageData.data[id] = 255 - c;
         imageData.data[id+1] = c % 128;
         imageData.data[id+2] = c / 2;
-        imageData.data[id+3] = c;
+        imageData.data[id+3] = 255;
     }
 }
 
@@ -153,7 +153,7 @@ for (let y = 0; y < h; y++) {
         imageData.data[id] = c;
         imageData.data[id+1] = c;
         imageData.data[id+2] = c;
-        imageData.data[id+3] = c;
+        imageData.data[id+3] = 255;
     }
 }
 
