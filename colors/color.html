@@ -100,7 +100,7 @@ c[2] = b[2] - a[2];</code></pre></div>
         <p>Since subtraction is not commutative, the order you put the values in is important. For example, if you subtract the second color from the first color, you get this:</p>
         <img src="images/SubSquare2.png" class="page-image" alt="Difference of two colors">
         <h3 class="subheading" id="difference">Difference</h3>
-        <p>Subtraction works in a similar way, but with a few key differences</p>
+        <p>Difference is essentially identical to subtraction, but instead of letting negative values be truncated, you use their absolute value, so you get the differences between the color values.</p>
         <div class="code-container"><pre><code class="language-javascript">c[0] = Math.abs(b[0] - a[0]);
 c[1] = Math.abs(b[1] - a[1]);
 c[2] = Math.abs(b[2] - a[2]);</code></pre></div>
