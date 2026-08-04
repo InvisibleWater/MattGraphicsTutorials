@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Rain</title>
+        <link rel="stylesheet" href="../style.css">
+        <link rel="stylesheet" href="../prism.css">
+        <script src="../js/ImageLoader.js"></script>
+        <script src="../js/EffectPlayer.js"></script>
+        <script src="js/RainEffect.js"></script>
+        <script src="../js/prism.js"></script>
+    </head>
+    <body>
+        <header class="page-header">
+            <h1>Matt's Graphics Tutorials</h1>
+            <h2>Rain</h2>
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#intro">Introduction</a></li>
+                <li><a href="#howItWorks">How It Works</a></li>
+                <li><a href="#code">The Code</a></li>
+                <li><a href="#textures">Better Textures</a></li>
+            </ul>
+
+            <a href="../index.html">Return to Index</a>
+        </header>
+        <h2 id="introduction">Introduction</h2>
+        <p></p>
+        <h2 id="howItWorks">How It Works</h2>
+
+        <h2 id="code">The Code</h2>
+        <p>First, we create our canvas, get the rendering context, then create two 16-bit integer arrays, as well as two ImageData objects &mdash; one to use as a buffer and another to store the background texture.</p>
+        <div class="code-container"><pre><code class="language-javascript line-numbers">//Canvas and context
+var canvas = document.createElement("canvas");
+canvas.width = 640;
+canvas.height = 480;
+
+var ctx = canvas.getContext("2d");
+
+//Source and destination arrays. This is where the ripple data is stored.
+var source = new Int16Array(canvas.width * canvas.height);
+var dest = new Int16Array(canvas.width * canvas.height);
+
+//Target and texture buffers
+var target = new ImageData(canvas.width, canvas.height);
+var texture = new ImageData(256, 256);</code></pre></div>
+        <p>Next, we create the texture. A light-blue XOR texture is used here for simplicity's sake. You could load an image from a file, but I'll cover that later.</p>
+<div class="code-container"><pre><code class="language-javascript line-numbers">//Generate texture
+for (let y = 0; y < texture.height; x++) {
+    for (let x = 0; x < texture.width; x++) {
+        let id = (y * texture.width + x) * 4;
+        let value = x ^ y;
+
+        texture.data[id] = value / 4;
+        texture.data[id + 1] = value;
+        texture.data[id + 2] = value;
+        texture.data[id + 3] = 255; 
+    }
+}</code></pre></div>
+        <p></p>
+        <p>Put it all together and you should get something that looks like this:</p>
+        <div id="container1"></div>
+        <h2 id="textures">Better Textures</h2>
+        <img src="images/RainBackground.png" class="page-image" alt="New background to rain on.">
+        <div id="container2"></div>
+        <p>These kinds of ripple effects have all sorts of uses outside of simulating rain. For example, instead of just creating the ripples randomly, you could create one wherever you click your mouse for some really interesting menus.</p>
+        <script>
+            var player1 = new EffectPlayer(RainEffect, 640, 480);
+            var player2 = new EffectPlayer(RainEffect, 640, 480);
+
+            let texturePromise1 = generateImage(256, 256, (x, y) => [(x ^ y) / 4, (x ^ y), (x ^ y), 255]);
+            let texturePromise2 = loadImage("images/RainBackground.png");
+
+            player1.load(texturePromise1);
+            player1.render(document.getElementById("container1"));
+
+            player2.load(texturePromise2);
+            player2.render(document.getElementById("container2"));
+        </script>
+    </body>
+</html>

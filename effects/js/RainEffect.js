@@ -29,13 +29,13 @@ class RainEffect {
     if (currentTicks - this.lastTicks > this.spawnInterval) {
       const ry = Math.floor(Math.random() * this.height);
       const rx = Math.floor(Math.random() * this.width);
-      this.source[ry * this.width + rx] = Math.round(Math.random() * this.rippleSize)
+      this.source[ry * this.width + rx] = Math.round(Math.random() * this.rippleSize, 32);
       this.lastTicks = currentTicks;
     }
 
-    for (i = this.width; i < end; i++) {
+    for (let i = this.width; i < end; i++) {
       this.dest[i] = ((this.source[i - 1] + this.source[i + 1] + this.source[i - this.width] + this.source[i + this.width]) >> 1) - this.dest[i]
-      this.dest[i] -= (this.dest[i] >> 5)
+      this.dest[i] -= (this.dest[i] >> 5);
     }
     const tmp = this.dest;
     this.dest = this.source;
