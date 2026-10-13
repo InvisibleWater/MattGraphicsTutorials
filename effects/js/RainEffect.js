@@ -7,6 +7,7 @@ class RainEffect {
     this.source = new Int16Array(this.width * this.height);
     this.dest = new Int16Array(this.width * this.height);
     this.playing = false;
+    this.canvasEnd = (this.height - 1) * this.width;
     this.texture;
     this.widthMask = 0;
     this.heightMask = 0;
@@ -23,18 +24,17 @@ class RainEffect {
   }
 
   render(t) {
-    const end = (this.height - 1) * this.width;
     const currentTicks = (t / 1000);
 
     if (currentTicks - this.lastTicks > this.spawnInterval) {
       const ry = Math.floor(Math.random() * this.height);
       const rx = Math.floor(Math.random() * this.width);
-      this.source[ry * this.width + rx] = Math.round(Math.random() * this.rippleSize, 32);
+      this.source[ry * this.width + rx] = Math.round(Math.random() * this.rippleSize);
       this.lastTicks = currentTicks;
     }
 
-    for (let i = this.width; i < end; i++) {
-      this.dest[i] = ((this.source[i - 1] + this.source[i + 1] + this.source[i - this.width] + this.source[i + this.width]) >> 1) - this.dest[i]
+    for (let i = this.width; i < this.canvasEnd; i++) {
+      this.dest[i] = ((this.source[i - 1] + this.source[i + 1] + this.source[i - this.width] + this.source[i + this.width]) >> 1) - this.dest[i];
       this.dest[i] -= (this.dest[i] >> 5);
     }
     const tmp = this.dest;
@@ -46,7 +46,7 @@ class RainEffect {
       for (let x = 1; x < this.width - 1; x++) {
         const dx = this.source[ofs + x - 1] - this.source[ofs + x + 1];
         const dy = this.source[ofs + x - this.width] - this.source[ofs + x + this.width];
-        const tx = ((y + dy) & this.heightMask) * this.texture.width * 4 + ((x + dx) & this.widthMask) * 4;
+        const tx = (((y + dy) & this.heightMask) * this.texture.width + ((x + dx) & this.widthMask)) * 4;
 
         let r = this.texture.data[tx];
         let g = this.texture.data[tx + 1];

@@ -131,7 +131,7 @@ window.requestAnimationFrame(draw);</code></pre></div>
         <h2 id="textures">Better Textures</h2>
         <p>In addition to procedurally generated images, it's possible to load a texture for the tunnel from a file. For this example, we'll be using the following image:</p>
         <img src="images/TunnelBackground.jpg" class="page-image" alt="New texture for the tunnel">
-        <p>First, replace the texture variable in your code with <code class="language-javascript">var texture;</code>. This leaves the variable empty, while still initializing it for later use.</p>
+        <p>First, replace the texture variable in your code with <code class="language-javascript">var texture;</code>, then remove the for loop that generates the XOR texture. This leaves the variable empty, while still initializing it for later use.</p>
         <p>Next, you'll need a function that converts the image into ImageData, which will allow you to access individual pixels. Luckily, we already have one <a href="../js/ImageLoader.js" target="_blank">here</a>. Feel free to copy it into your code somewhere.</p>
         <p>It's worth noting that the loadImage function in that script doesn't return ImageData directly &mdash; instead, it returns a Promise containing ImageData. To get the ImageData from the Promise and use it as the texture, you'll need to use the Promise's <code class="language-javascript">then()</code> function, which calls an additional function when the Promise is fulfilled or rejected, using the data from the Promise as arguments. Here's an example of what that might look like:</code></p>
         <div class="code-container"><pre><code class="language-javascript line-numbers">loadImage("TunnelBackground.jpg").then((data) => {
@@ -188,7 +188,7 @@ function draw(time) {
     let shiftY = Math.floor(texHeight * 0.25 * animation);
     //Calculate the look values out of the animation value
     //By using sine functions, it will alternate between looking left/right and up/down
-    //Make sure x + shiftLooxX never goes outside the dimensions of the array. Same for y + shiftLookY.
+    //Make sure x + shiftLookX never goes outside the dimensions of the array. Same for y + shiftLookY.
     let shiftLookX = canvas.width / 2 * Math.floor(canvas.width / 2 * Math.sin(animation));
     let shiftLookY = canvas.height / 2 * Math.floor(canvas.height / 2 * Math.sin(animation * 2));
 
