@@ -18,7 +18,6 @@
             <h3>Table of Contents</h3>
             <ul>
                 <li><a href="#intro">Introduction</a></li>
-                <li><a href="#howItWorks">How It Works</a></li>
                 <li><a href="#code">The Code</a></li>
                 <li><a href="#textures">Better Textures</a></li>
             </ul>
@@ -26,9 +25,7 @@
             <a href="../index.html">Return to Index</a>
         </header>
         <h2 id="introduction">Introduction</h2>
-        <p>This old-school effect simulates rain, as seen from above. </p>
-        <h2 id="howItWorks">How It Works</h2>
-
+        <p>This old-school effect simulates rain with procedurally-generated ripples.</p>
         <h2 id="code">The Code</h2>
         <p>First, we create our canvas, get the rendering context, then create two 16-bit integer arrays, as well as two ImageData objects &mdash; one to use as a buffer and another to store the background texture.</p>
         <div class="code-container"><pre><code class="language-javascript line-numbers">//Canvas and context
@@ -68,6 +65,7 @@ var end = (canvas.height - 1) * canvas.width;
 function render(t) {
     let currentTicks = t / 1000;
 
+    //Add a new ripple at a set interval
     if (currentTicks - lastTicks > interval) {
         let rx = Math.floor(Math.random() * canvas.width);
         let ry = Math.floor(Math.random() * canvas.height);
@@ -75,8 +73,8 @@ function render(t) {
         lastTicks = currentTicks;
     }
 
-    //
-    //
+    //Calculate the size of the ripples by averaging together the values of neigbhoring pixels, then subtract from there.
+    //Using bitwise right-shifts here may seem odd, but it's essentially just dividing by powers of two. 
     for (let i = canvas.width; i < end; i++) {
         dest[i] = ((source[i - 1] + source[i + 1] + source[i - canvas.width] + source[i + canvas.width]) >> 1) - dest[i];
         dest[i] -= (dest[i] >> 5);
@@ -103,10 +101,10 @@ function render(t) {
             let g = texture.data[tx + 1];
             let b = texture.data[tx + 2];
 
-            //Now that we have everything, it's time to 
+            //Now that we have everything, it's time to start adding the pixel data to the buffer. This is where the pixel is located in 1D array space.
             let targetIndex = (ofs + x) * 4;
 
-            //
+            //Apply the new color values to the buffer, clamping them between 0 and 255.
             //The subtraction is technically optional, but I've found that if you leave it out the ripples become harder to see on some textures.
             target.data[targetIndex] = Math.min(Math.max(r - dx, 0), 255);
             target.data[targetIndex + 1] = Math.min(Math.max(g - dx, 0), 255);
